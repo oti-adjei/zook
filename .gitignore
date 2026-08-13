@@ -1,0 +1,5 @@
+# deployd runtime state (per-stack)
+.deployd/
+
+# specs, plans, superpowers workflow docs — never committed
+docs/superpowers/
