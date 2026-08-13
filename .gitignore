@@ -3,3 +3,6 @@
 
 # specs, plans, superpowers workflow docs — never committed
 docs/superpowers/
+
+# macOS
+.DS_Store
