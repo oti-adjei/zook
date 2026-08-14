@@ -56,3 +56,14 @@ func TestDeployRequiresTwoArgs(t *testing.T) {
 		t.Fatalf("stderr=%q", errbuf.String())
 	}
 }
+
+func TestStatusRejectsExtraArgs(t *testing.T) {
+	var out, errbuf bytes.Buffer
+	code := Run([]string{"status", "a", "b"}, &out, &errbuf)
+	if code != 2 {
+		t.Fatalf("exit=%d, want 2", code)
+	}
+	if !strings.Contains(errbuf.String(), "usage: zook status") {
+		t.Fatalf("stderr=%q", errbuf.String())
+	}
+}

@@ -16,6 +16,10 @@ import (
 )
 
 func cmdStatus(args []string, stdout, stderr io.Writer) int {
+	if len(args) > 1 {
+		fmt.Fprintln(stderr, "usage: zook status [stack]")
+		return 2
+	}
 	root := stacksRoot()
 	var stacks []config.Stack
 	if len(args) == 1 {
