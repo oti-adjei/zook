@@ -108,6 +108,25 @@ func TestDeployRollbackAlsoFailsNeedsManual(t *testing.T) {
 	}
 }
 
+func TestDeployFailsWithNoPreviousVersion(t *testing.T) {
+	rt := &stubRuntime{upErrs: []error{errors.New("unhealthy")}}
+	e := NewEngine(rt, time.Second)
+	fixedNow(e)
+	s := newStack(t)
+	_ = SaveState(s.Dir, State{})
+	err := e.Deploy(context.Background(), s, "v1")
+	if err == nil {
+		t.Fatal("expected error when deploy fails with no previous version")
+	}
+	if len(rt.upCalls) != 1 {
+		t.Fatalf("expected no rollback attempt, calls=%v", rt.upCalls)
+	}
+	st, _ := LoadState(s.Dir)
+	if st.History[len(st.History)-1].Result != ResultFailed {
+		t.Fatalf("last history should be failed: %+v", st.History)
+	}
+}
+
 func TestRollbackWithoutPreviousErrors(t *testing.T) {
 	rt := &stubRuntime{}
 	e := NewEngine(rt, time.Second)

@@ -81,9 +81,10 @@ func (e *Engine) Deploy(ctx context.Context, s config.Stack, version string) err
 		fmt.Fprintln(log, "ROLLBACK FAILED — manual intervention required")
 		return fmt.Errorf("deploy failed and rollback failed — manual intervention required (deploy: %v; rollback: %v)", upErr, rbErr)
 	}
+	oldCurrent := st.Current
 	st.recordRolledBack(version, e.now())
 	_ = SaveState(s.Dir, st)
-	return fmt.Errorf("deploy of %s failed, rolled back to %s: %w", version, st.Current, upErr)
+	return fmt.Errorf("deploy of %s failed, rolled back to %s: %w", version, oldCurrent, upErr)
 }
 
 // Rollback restores the previous version, health-gated.
