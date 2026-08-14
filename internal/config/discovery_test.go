@@ -50,3 +50,25 @@ func TestFindStackMissing(t *testing.T) {
 		t.Fatalf("err = %v, want ErrStackNotFound", err)
 	}
 }
+
+func TestFindStackRejectsTraversal(t *testing.T) {
+	root := t.TempDir()
+	// Write a compose file in the parent so a naive join would "find" it.
+	writeFile(t, filepath.Join(root, "..", "compose.yaml"))
+
+	cases := []string{
+		"../../etc",
+		"../sibling",
+		"..",
+		".",
+		"",
+		"a/b",
+		"a" + string(filepath.Separator) + "b",
+	}
+	for _, name := range cases {
+		_, err := FindStack(root, name)
+		if !errors.Is(err, ErrStackNotFound) {
+			t.Errorf("FindStack(root, %q) = %v, want ErrStackNotFound", name, err)
+		}
+	}
+}

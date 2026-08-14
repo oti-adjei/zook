@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // ErrStackNotFound is returned when a named stack has no matching directory.
@@ -54,7 +55,14 @@ func DiscoverStacks(root string) ([]Stack, error) {
 }
 
 // FindStack returns the named stack under root.
+// It rejects names that are empty, equal to "." or "..", or that contain a
+// path separator or ".." segment, preventing path-traversal attacks.
 func FindStack(root, name string) (Stack, error) {
+	if name == "" || name == "." || name == ".." ||
+		strings.ContainsRune(name, filepath.Separator) ||
+		strings.Contains(name, "..") {
+		return Stack{}, fmt.Errorf("%q: %w", name, ErrStackNotFound)
+	}
 	dir := filepath.Join(root, name)
 	cf, ok := composeFileIn(dir)
 	if !ok {

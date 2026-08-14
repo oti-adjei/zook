@@ -66,7 +66,12 @@ func flush(w *tabwriter.Writer) int {
 }
 
 func cmdLogs(name string, stdout, stderr io.Writer) int {
-	dir := filepath.Join(stacksRoot(), name, ".zook", "logs")
+	s, err := config.FindStack(stacksRoot(), name)
+	if err != nil {
+		fmt.Fprintf(stderr, "no logs for %q\n", name)
+		return 1
+	}
+	dir := filepath.Join(s.Dir, ".zook", "logs")
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		fmt.Fprintf(stderr, "no logs for %q\n", name)

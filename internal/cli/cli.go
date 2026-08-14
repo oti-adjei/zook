@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -97,7 +96,12 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, "usage: zook releases <stack>")
 			return 2
 		}
-		st, err := core.LoadState(stackDir(args[1]))
+		s, err := config.FindStack(stacksRoot(), args[1])
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		st, err := core.LoadState(s.Dir)
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
@@ -132,6 +136,3 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 }
 
-func stackDir(name string) string {
-	return filepath.Join(stacksRoot(), name)
-}

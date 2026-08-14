@@ -67,3 +67,25 @@ func TestStatusRejectsExtraArgs(t *testing.T) {
 		t.Fatalf("stderr=%q", errbuf.String())
 	}
 }
+
+func TestReleasesTraversalReturnsExitOne(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("ZOOK_STACKS_ROOT", root)
+
+	var out, errbuf bytes.Buffer
+	code := Run([]string{"releases", "../../foo"}, &out, &errbuf)
+	if code != 1 {
+		t.Fatalf("exit=%d, want 1 (invalid/nonexistent stack should error); stderr=%s", code, errbuf.String())
+	}
+}
+
+func TestLogsTraversalReturnsExitOne(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("ZOOK_STACKS_ROOT", root)
+
+	var out, errbuf bytes.Buffer
+	code := Run([]string{"logs", "../../foo"}, &out, &errbuf)
+	if code != 1 {
+		t.Fatalf("exit=%d, want 1 (invalid/nonexistent stack should error); stderr=%s", code, errbuf.String())
+	}
+}
