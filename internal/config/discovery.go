@@ -1,5 +1,5 @@
-// Package config discovers Compose stacks on disk. A stack is any immediate
-// subdirectory of the stacks root that contains a Compose file.
+// Package config discovers stacks on disk (docker compose or native) and
+// parses per-stack zook.yaml configuration.
 package config
 
 import (
@@ -14,11 +14,13 @@ import (
 // ErrStackNotFound is returned when a named stack has no matching directory.
 var ErrStackNotFound = errors.New("stack not found")
 
-// Stack is a single deployable Compose project.
+// Stack is a single deployable stack (docker compose or native).
 type Stack struct {
 	Name        string
 	Dir         string
-	ComposeFile string
+	ComposeFile string       // "" for native-only stacks
+	Runtime     string       // "docker" | "native"
+	Config      *StackConfig // parsed zook.yaml; nil when absent
 }
 
 // composeNames are tried in order within a stack directory.
@@ -34,6 +36,26 @@ func composeFileIn(dir string) (string, bool) {
 	return "", false
 }
 
+// stackAt builds a Stack for dir if it is a stack (has a compose file or
+// zook.yaml). Returns ok=false when dir is not a stack.
+func stackAt(name, dir string) (Stack, bool, error) {
+	cf, hasCompose := composeFileIn(dir)
+	cfg, err := LoadConfig(dir)
+	if err != nil {
+		return Stack{}, false, fmt.Errorf("%s: %w", name, err)
+	}
+	if !hasCompose && cfg == nil {
+		return Stack{}, false, nil
+	}
+	return Stack{
+		Name:        name,
+		Dir:         dir,
+		ComposeFile: cf, // "" when no compose file
+		Runtime:     cfg.ResolvedRuntime(),
+		Config:      cfg,
+	}, true, nil
+}
+
 // DiscoverStacks returns every stack under root, sorted by name.
 func DiscoverStacks(root string) ([]Stack, error) {
 	entries, err := os.ReadDir(root)
@@ -45,9 +67,12 @@ func DiscoverStacks(root string) ([]Stack, error) {
 		if !e.IsDir() {
 			continue
 		}
-		dir := filepath.Join(root, e.Name())
-		if cf, ok := composeFileIn(dir); ok {
-			stacks = append(stacks, Stack{Name: e.Name(), Dir: dir, ComposeFile: cf})
+		s, ok, err := stackAt(e.Name(), filepath.Join(root, e.Name()))
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			stacks = append(stacks, s)
 		}
 	}
 	sort.Slice(stacks, func(i, j int) bool { return stacks[i].Name < stacks[j].Name })
@@ -63,10 +88,12 @@ func FindStack(root, name string) (Stack, error) {
 		strings.Contains(name, "..") {
 		return Stack{}, fmt.Errorf("%q: %w", name, ErrStackNotFound)
 	}
-	dir := filepath.Join(root, name)
-	cf, ok := composeFileIn(dir)
+	s, ok, err := stackAt(name, filepath.Join(root, name))
+	if err != nil {
+		return Stack{}, err
+	}
 	if !ok {
 		return Stack{}, fmt.Errorf("%q: %w", name, ErrStackNotFound)
 	}
-	return Stack{Name: name, Dir: dir, ComposeFile: cf}, nil
+	return s, nil
 }
