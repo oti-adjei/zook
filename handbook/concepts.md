@@ -3,13 +3,18 @@
 ## One binary, many stacks
 
 There is exactly one `zook` binary installed on the server. It manages any
-number of application stacks. The per-stack files (compose config, secrets,
-release state) are *not* per-app installations of Zook — they are the
-configuration and state for apps that the single tool manages.
+number of application stacks. The per-stack files (compose config, native
+binary, secrets, release state) are *not* per-app installations of Zook — they
+are the configuration and state for apps that the single tool manages.
 
 The analogy is `git`: one `/usr/local/bin/git` binary manages every repository
 on the machine. Each repository has its own `.git/` directory. Zook works the
 same way: one binary, each stack has its own `.zook/` directory.
+
+## Two runtimes, one interface
+
+Zook supports two deployment backends behind a single `Runtime` interface. The
+same `deploy`, `rollback`, and `status` commands work with both.
 
 ```
                  ONE /usr/local/bin/zook
@@ -20,27 +25,30 @@ same way: one binary, each stack has its own `.zook/` directory.
                             │
                 ┌───────────┴───────────┐
                 ▼                        ▼
-          DockerRuntime (V1)      NativeRuntime (later)
-                │
-          docker compose
-                │
-          Docker Engine
-                │
-         ┌──────┼──────┐
-         ▼      ▼      ▼
+          DockerRuntime            NativeRuntime
+                │                        │
+          docker compose            systemctl restart
+                │                        │
+          Docker Engine             systemd unit
+                │                        │
+         ┌──────┼──────┐         /opt/stacks/<stack>/
+         ▼      ▼      ▼          current -> releases/<version>/
        core   tenant  postgres
                -api
 ```
 
+The runtime is selected per stack via `zook.yaml`. When `zook.yaml` is absent
+or the `runtime:` field is omitted, `docker` is the default. Set
+`runtime: native` to use the native/systemd backend. See
+[native.md](native.md) for the full guide.
+
 ## What is a stack?
 
-A stack is any directory under the stacks root that contains a `compose.yaml`.
-Zook discovers stacks by scanning the filesystem — no central registry, no
-configuration file required in V1. If the directory has a `compose.yaml`, it is
-a stack.
+A stack is any directory under the stacks root that contains a `compose.yaml`
+or a `zook.yaml`. Zook discovers stacks by scanning the filesystem — no central
+registry required. Stack names are directory names.
 
-Stack names are directory names. A stack at `/opt/stacks/saas-staging/` has the
-name `saas-staging`.
+A stack at `/opt/stacks/saas-staging/` has the name `saas-staging`.
 
 ## What is a release?
 
@@ -65,7 +73,8 @@ deployed is `state.json`, not any environment file.
   other router.
 - Not a database tool. Rollback reverts the *application version*; it never
   touches database data.
-- Not a replacement for Docker Compose. Compose remains the runtime and
-  orchestrator; Zook is the release controller layered on top.
+- Not a replacement for Docker Compose (for docker stacks) or systemd (for
+  native stacks). Each remains the runtime; Zook is the release controller
+  layered on top.
 - Not Kubernetes, Nomad, or any scheduler. One server, one binary, straightforward
   deploys.

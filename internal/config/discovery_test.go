@@ -72,3 +72,52 @@ func TestFindStackRejectsTraversal(t *testing.T) {
 		}
 	}
 }
+
+func TestDiscoverIncludesNativeStacks(t *testing.T) {
+	root := t.TempDir()
+	// docker stack
+	writeFile(t, filepath.Join(root, "web", "compose.yaml"))
+	// native stack: zook.yaml, no compose
+	writeZook(t, filepath.Join(root, "rue"),
+		"runtime: native\nbinary: rue-api\nsystemd_unit: rue-api\nhealth:\n  url: http://localhost:8080/healthz\n")
+
+	stacks, err := DiscoverStacks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byName := map[string]Stack{}
+	for _, s := range stacks {
+		byName[s.Name] = s
+	}
+	if len(stacks) != 2 {
+		t.Fatalf("want 2 stacks, got %d: %v", len(stacks), stacks)
+	}
+	if byName["web"].Runtime != "docker" {
+		t.Fatalf("web should be docker, got %q", byName["web"].Runtime)
+	}
+	rue := byName["rue"]
+	if rue.Runtime != "native" || rue.Config == nil || rue.ComposeFile != "" {
+		t.Fatalf("rue native resolution wrong: %+v", rue)
+	}
+}
+
+func TestFindStackNativeOnly(t *testing.T) {
+	root := t.TempDir()
+	writeZook(t, filepath.Join(root, "rue"),
+		"runtime: native\nbinary: rue-api\nsystemd_unit: rue-api\nhealth:\n  command: [rue-api, health]\n")
+	s, err := FindStack(root, "rue")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Runtime != "native" || s.Config == nil {
+		t.Fatalf("native stack not resolved: %+v", s)
+	}
+}
+
+func TestFindStackStillGuardsTraversal(t *testing.T) {
+	root := t.TempDir()
+	writeZook(t, filepath.Join(root, "rue"), "runtime: native\nbinary: b\nsystemd_unit: u\nhealth:\n  url: http://x/h\n")
+	if _, err := FindStack(root, "../rue"); !errors.Is(err, ErrStackNotFound) {
+		t.Fatalf("traversal must be rejected: %v", err)
+	}
+}

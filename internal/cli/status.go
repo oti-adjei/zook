@@ -11,8 +11,6 @@ import (
 
 	"github.com/oti-adjei/zook/internal/config"
 	"github.com/oti-adjei/zook/internal/core"
-	"github.com/oti-adjei/zook/internal/exec"
-	"github.com/oti-adjei/zook/internal/runtime/docker"
 )
 
 func cmdStatus(args []string, stdout, stderr io.Writer) int {
@@ -36,13 +34,12 @@ func cmdStatus(args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 	}
-	rt := docker.New(exec.OSRunner{})
 	w := tabwriter.NewWriter(stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "STACK\tVERSION\tSTATUS")
+	fmt.Fprintln(w, "STACK\tRUNTIME\tVERSION\tSTATUS")
 	for _, s := range stacks {
 		st, _ := core.LoadState(s.Dir)
 		status := "unknown"
-		if ok, err := rt.Health(context.Background(), s); err == nil {
+		if ok, err := runtimeFor(s).Health(context.Background(), s); err == nil {
 			if ok {
 				status = "healthy"
 			} else {
@@ -53,7 +50,7 @@ func cmdStatus(args []string, stdout, stderr io.Writer) int {
 		if version == "" {
 			version = "-"
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", s.Name, version, status)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", s.Name, s.Runtime, version, status)
 	}
 	return flush(w)
 }
