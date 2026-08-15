@@ -78,3 +78,28 @@ func TestPollTimesOut(t *testing.T) {
 		t.Fatal("never-healthy should time out with error")
 	}
 }
+
+func TestCheckEmptyConfigErrors(t *testing.T) {
+	p := New(http.DefaultClient, exec.OSRunner{})
+	err := p.Check(context.Background(), Config{})
+	if err == nil {
+		t.Fatal("empty config should return an error")
+	}
+}
+
+func TestPollTimesOutPromptly(t *testing.T) {
+	doer := &fakeDoer{err: errors.New("connection refused")}
+	p := New(doer, exec.OSRunner{})
+	timeout := 50 * time.Millisecond
+	interval := 200 * time.Millisecond // interval > timeout: sleep must be bounded
+	start := time.Now()
+	err := p.Poll(context.Background(), Config{URL: "http://x/h"}, timeout, interval)
+	elapsed := time.Since(start)
+	if err == nil {
+		t.Fatal("never-healthy should time out with error")
+	}
+	// Should finish within ~2x the timeout, not a full interval past it.
+	if elapsed > 3*timeout {
+		t.Fatalf("Poll took %v, expected < %v (bounded sleep)", elapsed, 3*timeout)
+	}
+}

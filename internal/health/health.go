@@ -58,6 +58,9 @@ func (p *Prober) Check(ctx context.Context, cfg Config) error {
 		}
 		return nil
 	}
+	if len(cfg.Command) == 0 {
+		return fmt.Errorf("health check has neither url nor command")
+	}
 	return p.runner.Run(ctx, exec.Command{Name: cfg.Command[0], Args: cfg.Command[1:]})
 }
 
@@ -71,13 +74,18 @@ func (p *Prober) Poll(ctx context.Context, cfg Config, timeout, interval time.Du
 		if last == nil {
 			return nil
 		}
-		if time.Now().After(deadline) {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
 			return fmt.Errorf("health never passed within %s: %w", timeout, last)
+		}
+		wait := interval
+		if remaining < wait {
+			wait = remaining
 		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(interval):
+		case <-time.After(wait):
 		}
 	}
 }

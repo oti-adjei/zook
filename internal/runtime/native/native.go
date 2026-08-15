@@ -18,7 +18,7 @@ import (
 	"github.com/oti-adjei/zook/internal/runtime"
 )
 
-const pollInterval = 2 * time.Second
+const pollInterval = 500 * time.Millisecond
 
 // Fetcher downloads and extracts a version's artifact into destDir.
 type Fetcher interface {
