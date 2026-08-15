@@ -1,3 +1,60 @@
 {{define "content"}}
-<section class="hero"><h1>zook</h1></section>
+<section class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">deploy controller</p>
+    <h1>Hold your<br>deployments.</h1>
+    <p class="tagline">A tiny deploy controller for Docker Compose <em>and</em> native systemd apps. One static Go binary. Health-gated deploys, automatic rollback, and you understand every layer.</p>
+    <div class="cta">
+      <a class="btn primary" href="/install/">Get started</a>
+      <a class="btn" href="/docs/overview/">Read the docs</a>
+    </div>
+  </div>
+  <div class="hero-terminal">
+    <div class="terminal-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
+    <pre class="terminal-body"><code><span class="t-dim">$</span> zook deploy saas-staging v1.4.2
+<span class="t-dim">→</span> pulling image...
+<span class="t-dim">→</span> health check <span class="t-ok">passed</span>  (3/3)
+<span class="t-dim">→</span> committed  saas-staging@v1.4.2
+
+<span class="t-dim">$</span> zook status
+<span class="t-label">stack</span>            <span class="t-label">version</span>   <span class="t-label">health</span>
+saas-staging     v1.4.2    <span class="t-ok">●</span> healthy
+<span class="t-dim">$</span> <span class="t-cursor">▋</span></code></pre>
+  </div>
+</section>
+
+<section class="features">
+  <div class="feature">
+    <h3>Two runtimes, one interface</h3>
+    <p>Deploy Docker Compose stacks or native binaries under systemd — the same <code>deploy</code>, <code>rollback</code>, <code>status</code> commands for both.</p>
+  </div>
+  <div class="feature">
+    <h3>Fail-closed by default</h3>
+    <p>A deploy only counts as success if health checks pass. If they don't, zook rolls back automatically — and halts for you if the rollback also fails.</p>
+  </div>
+  <div class="feature">
+    <h3>No hidden state</h3>
+    <p>Per-stack release history and logs live next to your stack on disk. SSH in and read a JSON file. No database, no daemon, no central registry.</p>
+  </div>
+  <div class="feature">
+    <h3>Sits alongside your tools</h3>
+    <p>Not a replacement for Docker or Dockge — zook is the release controller on top. Keep what you have.</p>
+  </div>
+</section>
+
+<section class="story">
+  <h2>Why "zook"?</h2>
+  <div class="story-text">
+    <p>In Ghanaian pidgin, <strong>to zook</strong> means to hold — to hold right, to manage. That's the whole idea: zook holds your deployments. It manages the release lifecycle of your stacks so a bad version never becomes a bad night.</p>
+    <p>It's deliberately small. One binary, no framework, no magic. You can read the whole thing, understand every layer, and trust what it does to your server.</p>
+  </div>
+</section>
+
+<section class="quickstart">
+  <h2>Three commands you'll use every day</h2>
+  <pre><code>zook deploy saas-staging v1.4.2   <span class="c-comment"># pull, health-gate, commit or auto-rollback</span>
+zook status                       <span class="c-comment"># what's running, and is it healthy</span>
+zook rollback saas-staging        <span class="c-comment"># back to the previous good version</span></code></pre>
+  <p><a href="/docs/overview/">See the full documentation →</a></p>
+</section>
 {{end}}
