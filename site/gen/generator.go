@@ -169,13 +169,17 @@ func (g *Generator) copyStatic() error {
 		if err != nil {
 			return err
 		}
-		defer in.Close()
 		out, err := os.Create(dst)
 		if err != nil {
+			in.Close()
 			return err
 		}
-		defer out.Close()
 		_, err = io.Copy(out, in)
-		return err
+		in.Close()
+		if err != nil {
+			out.Close()
+			return err
+		}
+		return out.Close()
 	})
 }
