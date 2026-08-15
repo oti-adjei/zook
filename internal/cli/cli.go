@@ -5,14 +5,19 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strconv"
+	"text/tabwriter"
 	"time"
 
 	"github.com/oti-adjei/zook/internal/config"
 	"github.com/oti-adjei/zook/internal/core"
 	"github.com/oti-adjei/zook/internal/exec"
+	"github.com/oti-adjei/zook/internal/health"
+	"github.com/oti-adjei/zook/internal/runtime"
 	"github.com/oti-adjei/zook/internal/runtime/docker"
+	"github.com/oti-adjei/zook/internal/runtime/native"
 )
 
 const usage = `usage: zook <command> [args]
@@ -42,8 +47,17 @@ func timeout() time.Duration {
 	return 60 * time.Second
 }
 
-func newEngine() *core.Engine {
-	return core.NewEngine(docker.New(exec.OSRunner{}), timeout())
+func runtimeFor(s config.Stack) runtime.Runtime {
+	if s.Runtime == "native" {
+		prober := health.New(&http.Client{}, exec.OSRunner{})
+		return native.New(exec.OSRunner{}, prober, native.NewHTTPFetcher(&http.Client{}))
+	}
+	return docker.New(exec.OSRunner{})
+}
+
+func engineFor(s config.Stack) *core.Engine {
+	to := s.Config.Timeout(timeout())
+	return core.NewEngine(runtimeFor(s), to, core.WithRollbackOnFail(s.Config.ShouldRollback()))
 }
 
 // Run dispatches a subcommand and returns a process exit code.
@@ -64,7 +78,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
-		if err := newEngine().Deploy(ctx, s, args[2]); err != nil {
+		if err := engineFor(s).Deploy(ctx, s, args[2]); err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
@@ -81,7 +95,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
-		if err := newEngine().Rollback(ctx, s); err != nil {
+		if err := engineFor(s).Rollback(ctx, s); err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
@@ -118,9 +132,12 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
+		w := tabwriter.NewWriter(stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "STACK\tRUNTIME")
 		for _, s := range stacks {
-			fmt.Fprintln(stdout, s.Name)
+			fmt.Fprintf(w, "%s\t%s\n", s.Name, s.Runtime)
 		}
+		w.Flush()
 		return 0
 
 	case "logs":

@@ -89,3 +89,23 @@ func TestLogsTraversalReturnsExitOne(t *testing.T) {
 		t.Fatalf("exit=%d, want 1 (invalid/nonexistent stack should error); stderr=%s", code, errbuf.String())
 	}
 }
+
+func TestListShowsRuntimeColumn(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(filepath.Join(root, "web"), 0o755)
+	os.WriteFile(filepath.Join(root, "web", "compose.yaml"), []byte("services: {}\n"), 0o644)
+	os.MkdirAll(filepath.Join(root, "rue"), 0o755)
+	os.WriteFile(filepath.Join(root, "rue", "zook.yaml"),
+		[]byte("runtime: native\nbinary: rue-api\nsystemd_unit: rue-api\nhealth:\n  url: http://localhost:8080/healthz\n"), 0o644)
+	t.Setenv("ZOOK_STACKS_ROOT", root)
+
+	var out, errbuf bytes.Buffer
+	code := Run([]string{"list"}, &out, &errbuf)
+	if code != 0 {
+		t.Fatalf("exit=%d stderr=%s", code, errbuf.String())
+	}
+	s := out.String()
+	if !strings.Contains(s, "RUNTIME") || !strings.Contains(s, "native") || !strings.Contains(s, "docker") {
+		t.Fatalf("list should show runtime column with native+docker; got:\n%s", s)
+	}
+}
