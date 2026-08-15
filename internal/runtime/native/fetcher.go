@@ -72,9 +72,10 @@ func extractTarGz(r io.Reader, destDir string) error {
 		if err != nil {
 			return err
 		}
-		// reject path traversal
+		// reject path traversal.
+		// filepath.Clean normalises the entry before we validate it; keep this order.
 		clean := filepath.Clean(hdr.Name)
-		if strings.HasPrefix(clean, "..") || strings.Contains(clean, ".."+string(filepath.Separator)) || filepath.IsAbs(clean) {
+		if strings.HasPrefix(clean, "..") || filepath.IsAbs(clean) {
 			return fmt.Errorf("unsafe tar entry %q", hdr.Name)
 		}
 		target := filepath.Join(destDir, clean)
