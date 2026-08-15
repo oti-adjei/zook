@@ -12,3 +12,5 @@ for the native runtime.
 
 See the [handbook](handbook/README.md) for concepts, the deploy contract,
 command reference, architecture, and roadmap.
+
+The project includes a website generated from the handbook pages via `make site` — see `site/` for the generator and templates.

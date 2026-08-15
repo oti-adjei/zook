@@ -4,6 +4,9 @@ bin/
 # deployd runtime state (per-stack)
 .zook/
 
+# generated site
+site/dist/
+
 # specs, plans, superpowers workflow docs — never committed
 docs/superpowers/
 
