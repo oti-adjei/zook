@@ -12,3 +12,6 @@ docs/superpowers/
 
 # macOS
 .DS_Store
+
+# root build artifact from `go build ./...`
+/zook

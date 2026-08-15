@@ -29,6 +29,7 @@ commands:
   releases  <stack>             show release history
   list                          list discovered stacks
   logs      <stack>             show recent deploy logs
+  version                       print zook's version
 `
 
 func stacksRoot() string {
@@ -146,6 +147,10 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			return 2
 		}
 		return cmdLogs(args[1], stdout, stderr)
+
+	case "version":
+		printVersion(stdout)
+		return 0
 
 	default:
 		fmt.Fprintf(stderr, "unknown command %q\n\n%s", args[0], usage)

@@ -7,7 +7,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
-- CLI: `deploy`, `rollback`, `status`, `releases`, `list`, `logs`.
+- CLI: `deploy`, `rollback`, `status`, `releases`, `list`, `logs`, `version`.
 - Docker Compose runtime with health-gated deploys (`up -d --wait`).
 - Preflight that refuses to deploy stacks whose active services lack a healthcheck.
 - Automatic, health-gated rollback on failed deploys; halts for manual
