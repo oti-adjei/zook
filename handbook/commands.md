@@ -176,3 +176,15 @@ $ zook logs saas-staging
 Logs are stored at `.zook/logs/<timestamp>-<version>.log` inside the stack
 directory. The most recent file (by name sort) is shown. To see older logs,
 read them directly from the filesystem.
+
+## `zook version`
+
+Prints the zook version.
+
+```
+$ zook version
+zook v0.2.0 (a1b2c3d4e5f6)
+```
+
+The version is derived from the build's module version and VCS revision when
+available, falling back to `dev` for an untagged local build.

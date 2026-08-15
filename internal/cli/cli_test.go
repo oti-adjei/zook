@@ -109,3 +109,14 @@ func TestListShowsRuntimeColumn(t *testing.T) {
 		t.Fatalf("list should show runtime column with native+docker; got:\n%s", s)
 	}
 }
+
+func TestVersionCommand(t *testing.T) {
+	var out, errbuf bytes.Buffer
+	code := Run([]string{"version"}, &out, &errbuf)
+	if code != 0 {
+		t.Fatalf("version exit = %d, want 0 (stderr: %s)", code, errbuf.String())
+	}
+	if !strings.HasPrefix(out.String(), "zook ") {
+		t.Fatalf("version output = %q, want it to start with \"zook \"", out.String())
+	}
+}
