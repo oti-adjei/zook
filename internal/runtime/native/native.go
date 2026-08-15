@@ -15,6 +15,7 @@ import (
 	"github.com/oti-adjei/zook/internal/config"
 	"github.com/oti-adjei/zook/internal/exec"
 	"github.com/oti-adjei/zook/internal/health"
+	"github.com/oti-adjei/zook/internal/runtime"
 )
 
 const pollInterval = 2 * time.Second
@@ -35,6 +36,8 @@ type Runtime struct {
 func New(runner exec.Runner, prober *health.Prober, fetcher Fetcher) *Runtime {
 	return &Runtime{runner: runner, prober: prober, fetcher: fetcher}
 }
+
+var _ runtime.Runtime = (*Runtime)(nil)
 
 func (r *Runtime) releaseDir(s config.Stack, version string) string {
 	return filepath.Join(s.Dir, "releases", version)

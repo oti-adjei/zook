@@ -98,7 +98,7 @@ func TestUpFlipsSymlinkRestartsAndProbes(t *testing.T) {
 	}
 	// current symlink points at releases/v1
 	got, _ := os.Readlink(filepath.Join(s.Dir, "current"))
-	if filepath.Base(got) != "v1" {
+	if got != filepath.Join("releases", "v1") {
 		t.Fatalf("current → %q, want releases/v1", got)
 	}
 	// systemctl restart was called for the unit
