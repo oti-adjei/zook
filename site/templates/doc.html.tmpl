@@ -1,0 +1,10 @@
+{{define "content"}}
+<div class="docs-layout">
+  <aside class="sidebar">
+    <nav>
+      {{range .Nav}}<a href="/docs/{{.Slug}}/"{{if eq .Slug $.ActiveSlug}} class="active"{{end}}>{{.Title}}</a>{{end}}
+    </nav>
+  </aside>
+  <article class="doc-body">{{.Body}}</article>
+</div>
+{{end}}
