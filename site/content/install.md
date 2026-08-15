@@ -11,10 +11,10 @@ make build                                    # produces bin/zook
 sudo install -m 0755 bin/zook /usr/local/bin/zook
 ```
 
-Verify the install:
+Verify zook is on your PATH:
 
 ```bash
-zook version
+zook list
 ```
 
 ## Set up your stacks root
