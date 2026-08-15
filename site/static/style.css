@@ -133,6 +133,9 @@ main { flex: 1; }
   align-items: center;
 }
 
+/* left column: eyebrow, headline, tagline, CTA held as one grid child */
+.hero-inner { min-width: 0; }
+
 .hero-eyebrow {
   font-family: ui-monospace, monospace;
   font-size: .78rem;
@@ -246,7 +249,7 @@ main { flex: 1; }
 }
 .feature h3 {
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -.01em;
   margin-bottom: .6rem;
   color: var(--fg);
@@ -378,7 +381,7 @@ main { flex: 1; }
 }
 .doc-body h3, .page-body h3 {
   font-size: 1.05rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -.01em;
   margin-top: 1.75rem;
   margin-bottom: .5rem;
@@ -403,7 +406,7 @@ main { flex: 1; }
   line-height: 1.7;
 }
 .doc-body li, .page-body li { margin-bottom: .3rem; }
-.doc-body strong, .page-body strong { font-weight: 650; color: var(--fg); }
+.doc-body strong, .page-body strong { font-weight: 600; color: var(--fg); }
 .doc-body em, .page-body em { font-style: italic; }
 .doc-body hr, .page-body hr {
   border: none;
