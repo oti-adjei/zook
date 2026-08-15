@@ -13,6 +13,10 @@ Environment variables that affect every command:
 | `ZOOK_STACKS_ROOT` | `/opt/stacks` | Root directory scanned for stacks |
 | `ZOOK_TIMEOUT` | `60` | Seconds to wait for health on deploy/rollback |
 
+`zook.yaml` overrides: a stack's `health_timeout` and `rollback_on_fail` fields
+in `zook.yaml` take precedence over the global defaults for that stack. These
+overrides apply to both the docker and native runtimes.
+
 ---
 
 ## `zook deploy <stack> <version>`
@@ -98,22 +102,26 @@ no argument is given.
 
 ```
 $ zook status
-STACK           VERSION   STATUS
-saas-staging    v0.1.4    healthy
-rue             v1.4.1    healthy
+STACK           VERSION   RUNTIME   STATUS
+saas-staging    v0.1.4    docker    healthy
+rue             v1.4.1    native    healthy
 ```
 
 **Single stack:**
 
 ```
 $ zook status saas-staging
-STACK           VERSION   STATUS
-saas-staging    v0.1.4    healthy
+STACK           VERSION   RUNTIME   STATUS
+saas-staging    v0.1.4    docker    healthy
 ```
 
-Health is checked live via `docker compose ps` — it reflects the actual
-container state at the time of the command, not what `state.json` says.
-Possible values: `healthy`, `unhealthy`, `unknown`.
+The `RUNTIME` column shows `docker` or `native` as resolved from `zook.yaml`
+(default `docker` when no `zook.yaml` is present).
+
+Health is checked live — via `docker compose ps` for docker stacks, and via the
+configured `health.url` or `health.command` probe for native stacks. It
+reflects actual runtime state at the time of the command, not what `state.json`
+says. Possible values: `healthy`, `unhealthy`, `unknown`.
 
 ---
 
@@ -139,13 +147,17 @@ List all stacks discovered under the stacks root.
 
 ```
 $ zook list
-saas-staging
-rue
-another-app
+STACK           RUNTIME
+saas-staging    docker
+rue             native
+another-app     docker
 ```
 
-A stack is any directory under `ZOOK_STACKS_ROOT` that contains a
-`compose.yaml`.
+The `RUNTIME` column shows `docker` or `native` as resolved from `zook.yaml`
+(default `docker` when no `zook.yaml` is present).
+
+A stack is any directory under `ZOOK_STACKS_ROOT` that contains a `compose.yaml`
+or a `zook.yaml`.
 
 ---
 

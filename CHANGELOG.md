@@ -13,3 +13,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Automatic, health-gated rollback on failed deploys; halts for manual
   intervention when a rollback also fails.
 - Per-stack release state (`.zook/state.json`) and per-deploy logs.
+- Native/systemd runtime: deploy prebuilt binaries via release directories, a
+  `current` symlink, and `systemctl restart`, with zook-managed health polling.
+- `zook.yaml` per-stack config: selects the runtime (`docker` default, or
+  `native`) and sets overrides (`health_timeout`, `rollback_on_fail`).
+- HTTP/command health prober used by the native runtime.
+- HTTP artifact fetcher (`.tar.gz` or single binary) for native releases.
+- `RUNTIME` column in `zook list` and `zook status`.

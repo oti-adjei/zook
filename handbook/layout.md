@@ -7,21 +7,57 @@ All stacks live under a single directory, the *stacks root*. The default is
 
 ```
 /opt/stacks/                      # stacks root
-├── saas-staging/
+├── saas-staging/                 # docker stack
 │   ├── compose.yaml              # orchestration + healthcheck: blocks
 │   ├── .env                      # secrets/config — Zook NEVER writes this
 │   └── .zook/
 │       ├── state.json            # release state (gitignore this)
 │       └── logs/
 │           └── 20260813T173000Z-v0.1.4.log
-├── rue/
-│   └── ...
+├── rue/                          # native stack
+│   ├── zook.yaml                 # runtime: native + config
+│   ├── releases/
+│   │   ├── v1.4.2/rue-api        # immutable — fetched or pre-staged
+│   │   └── v1.4.1/rue-api
+│   ├── current -> releases/v1.4.2
+│   └── .zook/
+│       ├── state.json
+│       └── logs/
 └── another-app/
     └── ...
 ```
 
-Zook discovers stacks by looking for directories that contain a `compose.yaml`.
-No registration step required.
+Zook discovers stacks by looking for directories that contain a `compose.yaml`
+or a `zook.yaml`. No registration step required.
+
+## zook.yaml
+
+`zook.yaml` is a per-stack config file. It selects the runtime and carries
+overrides. It is **optional for docker stacks** (absent = V1 defaults) and
+**required for native stacks**.
+
+```yaml
+# runtime: docker (default) | native
+runtime: native
+
+# native-only (required when runtime: native)
+binary: rue-api
+systemd_unit: rue-api
+artifact: https://ci.example.com/rue-${VERSION}.tar.gz   # optional
+health:
+  url: http://localhost:8080/healthz
+  expected_status: 200
+
+# overrides (both runtimes, all optional)
+health_timeout: 60s
+rollback_on_fail: true
+```
+
+Unknown keys in `zook.yaml` cause a parse error — typos are caught at preflight.
+
+See [native.md](native.md) for the complete field reference and a worked
+example. For docker stacks, only `health_timeout` and `rollback_on_fail` are
+applicable in `zook.yaml`.
 
 ## The `.zook/` directory
 
