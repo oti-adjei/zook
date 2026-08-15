@@ -15,14 +15,27 @@ import (
 
 // Engine orchestrates deploys and rollbacks over a runtime.Runtime.
 type Engine struct {
-	rt      runtime.Runtime
-	timeout time.Duration
-	now     func() time.Time
+	rt             runtime.Runtime
+	timeout        time.Duration
+	now            func() time.Time
+	rollbackOnFail bool
+}
+
+// Option customizes an Engine.
+type Option func(*Engine)
+
+// WithRollbackOnFail toggles automatic rollback on a failed deploy (default true).
+func WithRollbackOnFail(v bool) Option {
+	return func(e *Engine) { e.rollbackOnFail = v }
 }
 
 // NewEngine returns an Engine using rt and the given health-wait timeout.
-func NewEngine(rt runtime.Runtime, timeout time.Duration) *Engine {
-	return &Engine{rt: rt, timeout: timeout, now: time.Now}
+func NewEngine(rt runtime.Runtime, timeout time.Duration, opts ...Option) *Engine {
+	e := &Engine{rt: rt, timeout: timeout, now: time.Now, rollbackOnFail: true}
+	for _, o := range opts {
+		o(e)
+	}
+	return e
 }
 
 func (e *Engine) openLog(stackDir, version string) (io.WriteCloser, error) {
@@ -67,6 +80,13 @@ func (e *Engine) Deploy(ctx context.Context, s config.Stack, version string) err
 		return SaveState(s.Dir, st)
 	}
 	fmt.Fprintf(log, "deploy of %s failed: %v\n", version, upErr)
+
+	if !e.rollbackOnFail {
+		st.recordFailed(version, e.now())
+		_ = SaveState(s.Dir, st)
+		fmt.Fprintln(log, "auto-rollback disabled (rollback_on_fail: false)")
+		return fmt.Errorf("deploy of %s failed (auto-rollback disabled): %w", version, upErr)
+	}
 
 	if st.Current == "" {
 		st.recordFailed(version, e.now())

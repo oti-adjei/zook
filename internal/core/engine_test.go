@@ -155,3 +155,25 @@ func TestRollbackSwapsCurrentPrevious(t *testing.T) {
 		t.Fatalf("state = %+v", st)
 	}
 }
+
+func TestDeployRespectsRollbackDisabled(t *testing.T) {
+	rt := &stubRuntime{upErrs: []error{errors.New("unhealthy")}} // only the deploy Up
+	e := NewEngine(rt, time.Second, WithRollbackOnFail(false))
+	fixedNow(e)
+	s := newStack(t)
+	_ = SaveState(s.Dir, State{Current: "v1"})
+	err := e.Deploy(context.Background(), s, "v2")
+	if err == nil {
+		t.Fatal("failed deploy should error")
+	}
+	if len(rt.upCalls) != 1 {
+		t.Fatalf("rollback disabled: expected exactly 1 Up call, got %v", rt.upCalls)
+	}
+	st, _ := LoadState(s.Dir)
+	if st.Current != "v1" {
+		t.Fatalf("current should stay v1, got %s", st.Current)
+	}
+	if st.History[len(st.History)-1].Result != ResultFailed {
+		t.Fatalf("last history should be failed: %+v", st.History)
+	}
+}
