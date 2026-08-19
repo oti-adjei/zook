@@ -1,0 +1,65 @@
+# GoReleaser config — https://goreleaser.com
+# Build + release zook, and publish a Homebrew formula to oti-adjei/homebrew-tap.
+# Validate:  goreleaser check
+# Dry-run:   goreleaser release --snapshot --clean
+version: 2
+
+project_name: zook
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: zook
+    main: .
+    binary: zook
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/oti-adjei/zook/internal/cli.version={{.Version}}
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: zook
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+homebrew_casks:
+  - name: zook
+    binaries:
+      - zook
+    repository:
+      owner: oti-adjei
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/oti-adjei/zook
+    description: Tiny single-binary deployment controller for Docker Compose and native systemd stacks
+    commit_author:
+      name: George Heavenson
+      email: 52512684+oti-adjei@users.noreply.github.com
+
+release:
+  github:
+    owner: oti-adjei
+    name: zook
