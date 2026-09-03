@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-03
+
 ### Added
 - CLI: `deploy`, `rollback`, `status`, `releases`, `list`, `logs`, `version`.
 - Docker Compose runtime with health-gated deploys (`up -d --wait`).
@@ -20,3 +22,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - HTTP/command health prober used by the native runtime.
 - HTTP artifact fetcher (`.tar.gz` or single binary) for native releases.
 - `RUNTIME` column in `zook list` and `zook status`.
+- Static site generator (`site/gen`, `make site`) that renders the handbook.
+- Homebrew distribution via GoReleaser: darwin/linux x amd64/arm64 archives,
+  a GitHub release, and a cask pushed to `oti-adjei/homebrew-tap`.
+- CI workflow running gofmt, `go vet`, `go test`, and a build on push and PR.
+
+### Licensing
+- Released under the PolyForm Noncommercial License 1.0.0.
+
+[Unreleased]: https://github.com/oti-adjei/zook/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/oti-adjei/zook/releases/tag/v0.1.0

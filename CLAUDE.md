@@ -12,10 +12,15 @@ Zook is a tiny single-binary deployment controller for Docker Compose stacks and
 make build     # CGO_ENABLED=0 go build -o bin/zook .
 make test      # go test ./...
 make install   # build + install to /usr/local/bin/zook
+make site      # render the static site into site/dist
+make site-serve # render + serve locally
 
 go test ./internal/core/...                     # one package
 go test -run TestEngine_Deploy ./internal/core  # one test
 ```
+
+CLI surface (`internal/cli/cli.go`): `deploy <stack> <version>`, `rollback <stack>`,
+`status [stack]`, `releases <stack>`, `list`, `logs <stack>`, `version`.
 
 ## Runtime env vars (used by the CLI)
 
@@ -46,9 +51,29 @@ Flow: `main.go` → `cli.Run` (dispatch + exit codes) → `config.FindStack`/`Di
 - `cli.Run` returns process exit codes directly: `0` ok, `1` runtime error, `2` usage error.
 - `${VERSION}` is the template token expanded in artifact URLs (native) and passed as `VERSION` env (docker).
 
+## Release
+
+Tagging `v*` fires `.github/workflows/release.yml` → GoReleaser (`.goreleaser.yaml`):
+darwin/linux × amd64/arm64 archives, a GitHub release, and a Homebrew cask pushed to
+`oti-adjei/homebrew-tap`. The tag is stamped into the binary via
+`-ldflags -X github.com/oti-adjei/zook/internal/cli.version=<tag>`; unstamped builds
+report `dev` plus VCS revision from `debug.ReadBuildInfo` (`internal/cli/version.go`).
+Validate config changes with `goreleaser check`; dry-run with `goreleaser release --snapshot --clean`.
+
+## Site
+
+`site/gen` is a stdlib static-site generator that renders `handbook/*.md` plus
+`site/content/*.md` through `site/templates/*.html.tmpl`, rewrites intra-doc
+links, and copies `site/static/`. `site/gen/nav.go` holds the docs nav manifest —
+add an entry there when you add a handbook page, or it won't appear in the nav.
+
 ## Docs
 
-The `handbook/` dir is the source of truth for concepts, the deploy contract, command reference, architecture, layout, and the native runtime (`handbook/native.md`, `handbook/native-smoke.md`).
+- `handbook/` — source of truth for concepts, layout, the deploy contract, command reference, architecture, roadmap, and the native runtime (`handbook/native.md`). Update it when behaviour changes.
+- `docs/native-smoke.md` — manual end-to-end smoke procedure for the native runtime.
+- `docs/superpowers/{specs,plans}/` — historical design docs and implementation plans, one per milestone. Read-only history; don't retrofit.
+- `CHANGELOG.md` — Keep a Changelog format. Add user-visible changes under `[Unreleased]` as you make them.
+- `handbook/roadmap.md` — V1 and V2 are shipped; V3 is `zook serve` (HTTP API + webhook receiver) layered on the unchanged `core.Engine`.
 
 ## Git
 
