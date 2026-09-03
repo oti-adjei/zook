@@ -58,6 +58,14 @@ homebrew_casks:
     commit_author:
       name: George Heavenson
       email: 52512684+oti-adjei@users.noreply.github.com
+    # Unsigned binaries are quarantined by Gatekeeper; strip the attribute so
+    # `zook` runs after `brew install --cask` on macOS.
+    hooks:
+      post:
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/zook"]
+          end
 
 release:
   github:
