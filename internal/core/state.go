@@ -33,7 +33,7 @@ type State struct {
 	History  []HistoryEntry `json:"history"`
 }
 
-func zookDir(stackDir string) string  { return filepath.Join(stackDir, ".zook") }
+func zookDir(stackDir string) string   { return filepath.Join(stackDir, ".zook") }
 func statePath(stackDir string) string { return filepath.Join(zookDir(stackDir), "state.json") }
 
 // LoadState reads a stack's state; a missing file yields a zero State.

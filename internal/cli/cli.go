@@ -157,4 +157,3 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 }
-

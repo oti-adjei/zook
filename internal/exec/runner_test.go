@@ -33,7 +33,7 @@ func TestOSRunnerPassesEnv(t *testing.T) {
 	var out bytes.Buffer
 	err := OSRunner{}.Run(context.Background(), Command{
 		Name: "sh", Args: []string{"-c", "echo $VERSION"},
-		Env:  []string{"VERSION=v9.9.9"}, Out: &out,
+		Env: []string{"VERSION=v9.9.9"}, Out: &out,
 	})
 	if err != nil {
 		t.Fatalf("Run error: %v", err)
