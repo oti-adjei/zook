@@ -27,6 +27,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   a GitHub release, and a cask pushed to `oti-adjei/homebrew-tap`.
 - CI workflow running gofmt, `go vet`, `go test`, and a build on push and PR.
 
+### Fixed
+- Stack discovery follows symlinked stack directories, so a stack linked into
+  the stacks root from an application repo appears in `zook list` and
+  `zook status`, not just `zook deploy`.
+
 ### Licensing
 - Released under the PolyForm Noncommercial License 1.0.0.
 
