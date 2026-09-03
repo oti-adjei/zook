@@ -121,3 +121,32 @@ func TestFindStackStillGuardsTraversal(t *testing.T) {
 		t.Fatalf("traversal must be rejected: %v", err)
 	}
 }
+
+func TestDiscoverFollowsSymlinkedStacks(t *testing.T) {
+	root := t.TempDir()
+	// A stack directory living outside the stacks root, linked into it — the
+	// shape you get when the compose file is part of an application repo.
+	elsewhere := t.TempDir()
+	writeFile(t, filepath.Join(elsewhere, "deploy", "compose.yaml"))
+	if err := os.Symlink(filepath.Join(elsewhere, "deploy"), filepath.Join(root, "linked")); err != nil {
+		t.Fatal(err)
+	}
+	// A symlink to a plain file must still be ignored.
+	if err := os.WriteFile(filepath.Join(elsewhere, "notes.txt"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(elsewhere, "notes.txt"), filepath.Join(root, "notafile")); err != nil {
+		t.Fatal(err)
+	}
+
+	stacks, err := DiscoverStacks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stacks) != 1 || stacks[0].Name != "linked" {
+		t.Fatalf("got %+v, want one stack named linked", stacks)
+	}
+	if stacks[0].ComposeFile == "" {
+		t.Error("symlinked stack resolved no compose file")
+	}
+}

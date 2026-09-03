@@ -56,6 +56,14 @@ func stackAt(name, dir string) (Stack, bool, error) {
 	}, true, nil
 }
 
+// isDir reports whether path is a directory, following symlinks. Stack
+// directories are often symlinks into a repo checkout, and os.ReadDir reports
+// those as non-directories — so listing must stat, not trust the dir entry.
+func isDir(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.IsDir()
+}
+
 // DiscoverStacks returns every stack under root, sorted by name.
 func DiscoverStacks(root string) ([]Stack, error) {
 	entries, err := os.ReadDir(root)
@@ -64,10 +72,11 @@ func DiscoverStacks(root string) ([]Stack, error) {
 	}
 	var stacks []Stack
 	for _, e := range entries {
-		if !e.IsDir() {
+		path := filepath.Join(root, e.Name())
+		if !isDir(path) {
 			continue
 		}
-		s, ok, err := stackAt(e.Name(), filepath.Join(root, e.Name()))
+		s, ok, err := stackAt(e.Name(), path)
 		if err != nil {
 			return nil, err
 		}
