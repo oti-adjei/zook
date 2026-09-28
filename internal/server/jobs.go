@@ -62,15 +62,18 @@ func newID() string {
 
 // Start registers a job for stack and runs fn in a goroutine. It refuses
 // with ErrStackBusy while another job for the same stack is in flight.
-func (j *Jobs) Start(kind, stack, version string, fn func(context.Context) error) (*Job, error) {
+// The returned Job is a snapshot of the queued job; the live record is
+// mutated only under the registry's mutex (see Get).
+func (j *Jobs) Start(kind, stack, version string, fn func(context.Context) error) (Job, error) {
 	j.mu.Lock()
 	if j.running[stack] {
 		j.mu.Unlock()
-		return nil, ErrStackBusy
+		return Job{}, ErrStackBusy
 	}
 	job := &Job{ID: newID(), Kind: kind, Stack: stack, Version: version, Status: Queued, CreatedAt: time.Now().UTC()}
 	j.jobs[job.ID] = job
 	j.running[stack] = true
+	snapshot := *job
 	j.mu.Unlock()
 
 	go func() {
@@ -92,7 +95,7 @@ func (j *Jobs) Start(kind, stack, version string, fn func(context.Context) error
 		j.mu.Unlock()
 	}()
 
-	return job, nil
+	return snapshot, nil
 }
 
 // Get returns a snapshot of the job with the given id.
