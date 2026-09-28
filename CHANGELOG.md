@@ -6,6 +6,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `zook serve` daemon: HTTP API with `POST /deploy` / `POST /rollback`
+  (async jobs, bearer-token auth, fail-closed when unset), `GET /stacks`,
+  `GET /stacks/{name}`, `GET /jobs/{id}`, and `GET /healthz`.
+- GitHub webhook receiver (`POST /hooks/github`) with HMAC-SHA256 signature
+  verification; push events auto-deploy stacks configured via `deploy_on.github`
+  (`branch:` exact match or `tag:` glob) in `zook.yaml`.
+- Per-stack deploy serialization in the daemon (one in-flight deploy per
+  stack, `409` on conflict).
+
 ## [0.1.0] - 2026-09-03
 
 ### Added

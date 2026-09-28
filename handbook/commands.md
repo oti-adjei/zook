@@ -177,6 +177,20 @@ Logs are stored at `.zook/logs/<timestamp>-<version>.log` inside the stack
 directory. The most recent file (by name sort) is shown. To see older logs,
 read them directly from the filesystem.
 
+## `zook serve`
+
+Runs the HTTP API + webhook daemon until SIGINT/SIGTERM. Binds to
+`127.0.0.1:8484` by default; see [Serve (HTTP API)](/docs/serve/) for the
+full endpoint reference, auth, and GitHub webhook setup.
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `ZOOK_ADDR` | `127.0.0.1:8484` | Listen address |
+| `ZOOK_API_TOKEN` | *(unset)* | Bearer token; unset disables deploy/rollback endpoints (503) |
+| `ZOOK_WEBHOOK_SECRET` | *(unset)* | GitHub webhook secret; unset rejects all deliveries |
+
+Exits `0` on graceful shutdown, `1` on a listen error.
+
 ## `zook version`
 
 Prints the zook version.

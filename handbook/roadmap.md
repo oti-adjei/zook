@@ -28,17 +28,21 @@ Also shipped in V2: an HTTP/command health prober used by the native runtime;
 an HTTP artifact fetcher (`.tar.gz` or single binary); and a `RUNTIME` column
 in `zook list` and `zook status`.
 
-## V3 — `zook serve` (webhooks + HTTP API)
+## V3 — `zook serve` (webhooks + HTTP API) — shipped
 
 **Long-running daemon** that exposes an HTTP API and webhook endpoint:
 
 - `POST /deploy` — trigger a deploy from a GitHub Actions workflow or any
   CI system.
-- GitHub webhook receiver — deploy on push to a specific branch or tag.
-- Status API — query current version and health over HTTP.
+- GitHub webhook receiver — HMAC-verified push events deploy a stack via
+  per-stack `deploy_on.github` config (`branch:` exact or `tag:` glob) in
+  `zook.yaml`.
+- Status API — `GET /stacks`, `GET /stacks/{name}`, `GET /jobs/{id}`.
 
-The `cli` package becomes one transport; the HTTP handler becomes another. The
-`core.Engine` and `Runtime` interface are unchanged.
+The CLI became one transport; the HTTP handler another. The `core.Engine`
+and `Runtime` interface are unchanged. Deploys serialize per stack (409 on
+conflict); mutating endpoints require a bearer token and fail closed when
+unset. See [Serve (HTTP API)](/docs/serve/).
 
 ## Later
 

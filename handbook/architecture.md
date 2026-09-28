@@ -7,17 +7,33 @@ zook/
 ├── main.go            # entry point: calls cli.Run
 ├── internal/
 │   ├── cli/           # command parsing, human-readable output
-│   │   ├── cli.go     # command dispatch (deploy/rollback/status/releases/list/logs)
-│   │   └── status.go  # status table + logs display
+│   │   ├── cli.go     # command dispatch (deploy/rollback/status/releases/list/logs/serve)
+│   │   ├── status.go  # status table + logs display
+│   │   └── serve.go   # `zook serve`: runs the HTTP daemon
+│   ├── server/        # HTTP transport: API handlers + job registry
+│   │   ├── server.go  # routes, auth, webhook receiver
+│   │   └── jobs.go    # async jobs, per-stack serialization (409 on busy)
+│   ├── webhook/       # GitHub HMAC verification + push-event parsing (pure)
+│   ├── wire/          # engine factory + env defaults, shared by cli and server
 │   ├── core/          # release logic, state — runtime-agnostic
 │   │   ├── engine.go  # Deploy + Rollback orchestration
 │   │   └── state.go   # State, HistoryEntry, LoadState, SaveState
 │   ├── runtime/
 │   │   ├── runtime.go # Runtime interface
-│   │   └── docker/    # DockerRuntime: shells out to `docker compose`
-│   ├── config/        # stack discovery, FindStack, DiscoverStacks
+│   │   ├── docker/    # DockerRuntime: shells out to `docker compose`
+│   │   └── native/    # NativeRuntime: systemd + release dirs + health prober
+│   ├── health/        # HTTP/command prober (native runtime)
+│   ├── config/        # stack discovery, zook.yaml parsing, FindStack
 │   └── exec/          # Runner interface + OSRunner (thin shell-out wrapper)
 ```
+
+## Two transports, one engine
+
+The CLI and the HTTP daemon are both thin transports over `core.Engine`:
+`wire.EngineFor` builds the same engine (runtime selection, per-stack
+overrides) for both. The engine assumes a single writer per stack — the CLI
+is one-shot, and the server's job registry enforces it (one in-flight deploy
+per stack, `409` on conflict).
 
 ## The `Runtime` interface
 

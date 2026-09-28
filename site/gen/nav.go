@@ -19,6 +19,7 @@ var docsNav = []NavItem{
 	{Slug: "stacks", Title: "Stacks", File: "stacks.md"},
 	{Slug: "architecture", Title: "Architecture", File: "architecture.md"},
 	{Slug: "native", Title: "Native Runtime", File: "native.md"},
+	{Slug: "serve", Title: "Serve (HTTP API)", File: "serve.md"},
 	{Slug: "roadmap", Title: "Roadmap", File: "roadmap.md"},
 }
 
