@@ -11,6 +11,7 @@ import (
 
 	"github.com/oti-adjei/zook/internal/config"
 	"github.com/oti-adjei/zook/internal/core"
+	"github.com/oti-adjei/zook/internal/wire"
 )
 
 func cmdStatus(args []string, stdout, stderr io.Writer) int {
@@ -18,7 +19,7 @@ func cmdStatus(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "usage: zook status [stack]")
 		return 2
 	}
-	root := stacksRoot()
+	root := wire.StacksRoot()
 	var stacks []config.Stack
 	if len(args) == 1 {
 		s, err := config.FindStack(root, args[0])
@@ -39,7 +40,7 @@ func cmdStatus(args []string, stdout, stderr io.Writer) int {
 	for _, s := range stacks {
 		st, _ := core.LoadState(s.Dir)
 		status := "unknown"
-		if ok, err := runtimeFor(s).Health(context.Background(), s); err == nil {
+		if ok, err := wire.RuntimeFor(s).Health(context.Background(), s); err == nil {
 			if ok {
 				status = "healthy"
 			} else {
@@ -63,7 +64,7 @@ func flush(w *tabwriter.Writer) int {
 }
 
 func cmdLogs(name string, stdout, stderr io.Writer) int {
-	s, err := config.FindStack(stacksRoot(), name)
+	s, err := config.FindStack(wire.StacksRoot(), name)
 	if err != nil {
 		fmt.Fprintf(stderr, "no logs for %q\n", name)
 		return 1

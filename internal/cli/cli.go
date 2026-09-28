@@ -5,19 +5,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
-	"os"
-	"strconv"
 	"text/tabwriter"
 	"time"
 
 	"github.com/oti-adjei/zook/internal/config"
 	"github.com/oti-adjei/zook/internal/core"
-	"github.com/oti-adjei/zook/internal/exec"
-	"github.com/oti-adjei/zook/internal/health"
-	"github.com/oti-adjei/zook/internal/runtime"
-	"github.com/oti-adjei/zook/internal/runtime/docker"
-	"github.com/oti-adjei/zook/internal/runtime/native"
+	"github.com/oti-adjei/zook/internal/wire"
 )
 
 const usage = `usage: zook <command> [args]
@@ -32,33 +25,8 @@ commands:
   version                       print zook's version
 `
 
-func stacksRoot() string {
-	if r := os.Getenv("ZOOK_STACKS_ROOT"); r != "" {
-		return r
-	}
-	return "/opt/stacks"
-}
-
-func timeout() time.Duration {
-	if s := os.Getenv("ZOOK_TIMEOUT"); s != "" {
-		if n, err := strconv.Atoi(s); err == nil {
-			return time.Duration(n) * time.Second
-		}
-	}
-	return 60 * time.Second
-}
-
-func runtimeFor(s config.Stack) runtime.Runtime {
-	if s.Runtime == "native" {
-		prober := health.New(&http.Client{}, exec.OSRunner{})
-		return native.New(exec.OSRunner{}, prober, native.NewHTTPFetcher(&http.Client{}))
-	}
-	return docker.New(exec.OSRunner{})
-}
-
 func engineFor(s config.Stack) *core.Engine {
-	to := s.Config.Timeout(timeout())
-	return core.NewEngine(runtimeFor(s), to, core.WithRollbackOnFail(s.Config.ShouldRollback()))
+	return wire.EngineFor(s, wire.DefaultTimeout())
 }
 
 // Run dispatches a subcommand and returns a process exit code.
@@ -74,7 +42,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, "usage: zook deploy <stack> <version>")
 			return 2
 		}
-		s, err := config.FindStack(stacksRoot(), args[1])
+		s, err := config.FindStack(wire.StacksRoot(), args[1])
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
@@ -91,7 +59,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, "usage: zook rollback <stack>")
 			return 2
 		}
-		s, err := config.FindStack(stacksRoot(), args[1])
+		s, err := config.FindStack(wire.StacksRoot(), args[1])
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
@@ -111,7 +79,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, "usage: zook releases <stack>")
 			return 2
 		}
-		s, err := config.FindStack(stacksRoot(), args[1])
+		s, err := config.FindStack(wire.StacksRoot(), args[1])
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
@@ -128,7 +96,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return 0
 
 	case "list":
-		stacks, err := config.DiscoverStacks(stacksRoot())
+		stacks, err := config.DiscoverStacks(wire.StacksRoot())
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
