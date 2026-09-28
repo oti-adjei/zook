@@ -22,15 +22,30 @@ type HealthConfig struct {
 	ExpectedStatus int      `yaml:"expected_status"`
 }
 
+// GitHubDeploy wires a stack to GitHub push events. Branch matches exactly;
+// Tag is a glob (path.Match syntax, e.g. "v*"). Exactly one of Branch/Tag
+// must be set.
+type GitHubDeploy struct {
+	Repo   string `yaml:"repo"`
+	Branch string `yaml:"branch"`
+	Tag    string `yaml:"tag"`
+}
+
+// DeployOnConfig declares automatic deploy triggers.
+type DeployOnConfig struct {
+	GitHub *GitHubDeploy `yaml:"github"`
+}
+
 // StackConfig is a parsed zook.yaml. Optional for docker, required for native.
 type StackConfig struct {
-	Runtime        string        `yaml:"runtime"`
-	Binary         string        `yaml:"binary"`
-	SystemdUnit    string        `yaml:"systemd_unit"`
-	Artifact       string        `yaml:"artifact"`
-	Health         *HealthConfig `yaml:"health"`
-	HealthTimeout  string        `yaml:"health_timeout"`
-	RollbackOnFail *bool         `yaml:"rollback_on_fail"`
+	Runtime        string          `yaml:"runtime"`
+	Binary         string          `yaml:"binary"`
+	SystemdUnit    string          `yaml:"systemd_unit"`
+	Artifact       string          `yaml:"artifact"`
+	Health         *HealthConfig   `yaml:"health"`
+	HealthTimeout  string          `yaml:"health_timeout"`
+	RollbackOnFail *bool           `yaml:"rollback_on_fail"`
+	DeployOn       *DeployOnConfig `yaml:"deploy_on"`
 }
 
 // LoadConfig reads and validates <dir>/zook.yaml. A missing file yields (nil, nil).
@@ -84,6 +99,15 @@ func (c *StackConfig) Validate() error {
 		}
 	default:
 		return fmt.Errorf("unknown runtime %q (want docker or native)", c.Runtime)
+	}
+	if c.DeployOn != nil && c.DeployOn.GitHub != nil {
+		g := c.DeployOn.GitHub
+		if g.Repo == "" {
+			return errors.New("deploy_on.github requires 'repo'")
+		}
+		if (g.Branch == "") == (g.Tag == "") {
+			return errors.New("deploy_on.github must set exactly one of 'branch' or 'tag'")
+		}
 	}
 	if c.HealthTimeout != "" {
 		if _, err := time.ParseDuration(c.HealthTimeout); err != nil {

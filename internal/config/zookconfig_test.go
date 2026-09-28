@@ -104,3 +104,51 @@ func TestValidateNativeCommandOK(t *testing.T) {
 		t.Fatalf("command health should be valid: %v", err)
 	}
 }
+
+func TestDeployOnValidBranch(t *testing.T) {
+	dir := t.TempDir()
+	writeZook(t, dir, "deploy_on:\n  github:\n    repo: oti-adjei/rue\n    branch: main\n")
+	c, err := LoadConfig(dir)
+	if err != nil {
+		t.Fatalf("valid deploy_on should parse: %v", err)
+	}
+	if c.DeployOn == nil || c.DeployOn.GitHub == nil || c.DeployOn.GitHub.Branch != "main" {
+		t.Fatalf("deploy_on not parsed: %+v", c.DeployOn)
+	}
+}
+
+func TestDeployOnValidTagGlob(t *testing.T) {
+	dir := t.TempDir()
+	writeZook(t, dir, "runtime: native\nbinary: b\nsystemd_unit: u\nhealth:\n  command: [b]\ndeploy_on:\n  github:\n    repo: oti-adjei/rue\n    tag: \"v*\"\n")
+	c, err := LoadConfig(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.DeployOn.GitHub.Tag != "v*" {
+		t.Fatalf("tag glob not parsed: %+v", c.DeployOn)
+	}
+}
+
+func TestDeployOnRejections(t *testing.T) {
+	cases := map[string]string{
+		"missing repo":    "deploy_on:\n  github:\n    branch: main\n",
+		"both branch+tag": "deploy_on:\n  github:\n    repo: o/r\n    branch: main\n    tag: \"v*\"\n",
+		"neither":         "deploy_on:\n  github:\n    repo: o/r\n",
+	}
+	for name, body := range cases {
+		dir := t.TempDir()
+		writeZook(t, dir, body)
+		if _, err := LoadConfig(dir); err == nil {
+			t.Fatalf("%s: expected error", name)
+		}
+	}
+}
+
+func TestDeployOnAbsentIsFine(t *testing.T) {
+	dir := t.TempDir()
+	writeZook(t, dir, "health_timeout: 30s\n")
+	c, err := LoadConfig(dir)
+	if err != nil || c.DeployOn != nil {
+		t.Fatalf("no deploy_on → nil: %v %+v", err, c.DeployOn)
+	}
+}
