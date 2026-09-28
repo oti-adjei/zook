@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestRunNoArgsPrintsUsage(t *testing.T) {
@@ -118,5 +119,28 @@ func TestVersionCommand(t *testing.T) {
 	}
 	if !strings.HasPrefix(out.String(), "zook ") {
 		t.Fatalf("version output = %q, want it to start with \"zook \"", out.String())
+	}
+}
+
+func TestServeUsageError(t *testing.T) {
+	var out, errbuf bytes.Buffer
+	if code := Run([]string{"serve", "extra"}, &out, &errbuf); code != 2 {
+		t.Fatalf("serve with args → 2, got %d", code)
+	}
+}
+
+func TestServeBadAddrFails(t *testing.T) {
+	t.Setenv("ZOOK_ADDR", "256.256.256.256:99999") // invalid → immediate listen error
+	var out, errbuf bytes.Buffer
+	// Give the listener a moment; cmdServe exits 1 on ListenAndServe failure.
+	done := make(chan int, 1)
+	go func() { done <- Run([]string{"serve"}, &out, &errbuf) }()
+	select {
+	case code := <-done:
+		if code != 1 {
+			t.Fatalf("invalid addr → 1, got %d (stderr: %s)", code, errbuf.String())
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("serve did not exit on listen error")
 	}
 }

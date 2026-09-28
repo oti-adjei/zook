@@ -22,6 +22,8 @@ commands:
   releases  <stack>             show release history
   list                          list discovered stacks
   logs      <stack>             show recent deploy logs
+  serve                       run the HTTP API + webhook daemon (env: ZOOK_ADDR,
+                              ZOOK_API_TOKEN, ZOOK_WEBHOOK_SECRET)
   version                       print zook's version
 `
 
@@ -115,6 +117,13 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			return 2
 		}
 		return cmdLogs(args[1], stdout, stderr)
+
+	case "serve":
+		if len(args) != 1 {
+			fmt.Fprintln(stderr, "usage: zook serve")
+			return 2
+		}
+		return cmdServe(stdout, stderr)
 
 	case "version":
 		printVersion(stdout)
